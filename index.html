@@ -1,0 +1,916 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STC바디리셋 — 내 몸 상태 지금 확인하기</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0d0d;
+    --bg2: #141414;
+    --bg3: #1a1a1a;
+    --card: #1e1e1e;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #f0ede6;
+    --muted: #888;
+    --accent: #c8a96e;
+    --accent2: #e8c98e;
+    --accent-bg: rgba(200,169,110,0.1);
+    --accent-border: rgba(200,169,110,0.3);
+    --red: #e05c5c;
+    --red-bg: rgba(224,92,92,0.1);
+    --green: #5cbe8a;
+    --green-bg: rgba(92,190,138,0.1);
+    --amber: #e8a835;
+    --amber-bg: rgba(232,168,53,0.1);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Noto Sans KR', sans-serif;
+    font-weight: 400;
+    line-height: 1.7;
+    overflow-x: hidden;
+  }
+
+  /* NOISE TEXTURE */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { max-width: 720px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0;
+    background: rgba(13,13,13,0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    z-index: 100;
+    padding: 16px 24px;
+    display: flex; justify-content: center;
+  }
+  .nav-inner { max-width: 720px; width: 100%; display: flex; justify-content: space-between; align-items: center; }
+  .logo { font-family: 'Noto Serif KR', serif; font-size: 16px; font-weight: 700; color: var(--accent); letter-spacing: 0.05em; }
+  .nav-cta {
+    font-size: 12px; color: var(--accent); border: 1px solid var(--accent-border);
+    padding: 7px 16px; border-radius: 20px; cursor: pointer; text-decoration: none;
+    transition: background 0.2s;
+  }
+  .nav-cta:hover { background: var(--accent-bg); }
+
+  /* SECTIONS */
+  section { padding: 80px 0; }
+  section:first-of-type { padding-top: 140px; }
+
+  .divider {
+    width: 40px; height: 1px; background: var(--accent);
+    margin: 20px auto; opacity: 0.5;
+  }
+
+  /* HERO */
+  .hero { text-align: center; padding-top: 140px; padding-bottom: 80px; }
+  .hero-eyebrow {
+    display: inline-block;
+    font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent); border: 1px solid var(--accent-border);
+    padding: 6px 16px; border-radius: 20px; margin-bottom: 32px;
+  }
+  .hero h1 {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(26px, 5vw, 42px);
+    font-weight: 700;
+    line-height: 1.4;
+    margin-bottom: 20px;
+    color: var(--text);
+  }
+  .hero h1 em { font-style: normal; color: var(--accent2); }
+  .hero-sub {
+    font-size: 15px; color: var(--muted); line-height: 1.9;
+    max-width: 480px; margin: 0 auto 40px;
+  }
+  .hero-sub strong { color: var(--text); font-weight: 500; }
+  .btn-primary {
+    display: inline-block;
+    background: var(--accent);
+    color: #0d0d0d;
+    font-size: 14px; font-weight: 700;
+    padding: 14px 36px; border-radius: 4px;
+    text-decoration: none; cursor: pointer; border: none;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+
+  /* SECTION HEADER */
+  .sec-label {
+    font-size: 10px; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 12px;
+  }
+  .sec-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: clamp(20px, 3.5vw, 28px);
+    font-weight: 700; line-height: 1.45;
+    margin-bottom: 16px;
+  }
+  .sec-desc { font-size: 14px; color: var(--muted); line-height: 1.9; }
+
+  /* EMPATHY */
+  .empathy-list { margin-top: 28px; display: flex; flex-direction: column; gap: 12px; }
+  .empathy-item {
+    display: flex; align-items: flex-start; gap: 14px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 16px 20px;
+    transition: border-color 0.2s;
+  }
+  .empathy-item:hover { border-color: var(--border2); }
+  .empathy-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--accent); flex-shrink: 0; margin-top: 8px;
+  }
+  .empathy-text { font-size: 14px; color: var(--text); }
+  .empathy-quote {
+    margin-top: 28px;
+    border-left: 2px solid var(--accent);
+    padding: 14px 20px;
+    font-size: 14px; color: var(--muted); font-style: italic;
+    background: var(--accent-bg); border-radius: 0 8px 8px 0;
+  }
+
+  /* FUTURE */
+  .future-box {
+    background: var(--red-bg);
+    border: 1px solid rgba(224,92,92,0.2);
+    border-radius: 12px; padding: 28px;
+    margin-top: 28px;
+  }
+  .future-title { font-size: 13px; color: var(--red); font-weight: 500; margin-bottom: 16px; letter-spacing: 0.05em; }
+  .future-item {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid rgba(224,92,92,0.1);
+    font-size: 13px; color: #e0a0a0; line-height: 1.6;
+  }
+  .future-item:last-child { border-bottom: none; }
+  .future-arrow { color: var(--red); font-size: 12px; margin-top: 2px; flex-shrink: 0; }
+  .future-callout {
+    margin-top: 20px; font-size: 13px; color: var(--muted);
+    border-left: 2px solid var(--red); padding-left: 16px;
+    border-radius: 0; line-height: 1.8;
+  }
+
+  /* CHECKLIST */
+  .checklist-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-top: 28px;
+  }
+  @media(max-width:560px){ .checklist-grid { grid-template-columns: 1fr; } }
+  .check-item {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 8px; padding: 14px 16px; cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    user-select: none;
+  }
+  .check-item.checked {
+    border-color: var(--accent-border);
+    background: var(--accent-bg);
+  }
+  .check-box {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 1.5px solid var(--border2); flex-shrink: 0;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.2s;
+  }
+  .check-item.checked .check-box {
+    background: var(--accent); border-color: var(--accent);
+  }
+  .check-mark { color: #0d0d0d; font-size: 11px; font-weight: 700; display: none; }
+  .check-item.checked .check-mark { display: block; }
+  .check-text { font-size: 13px; color: var(--text); line-height: 1.4; }
+
+  /* RESULT */
+  .result-area {
+    margin-top: 28px; padding: 28px;
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; display: none;
+  }
+  .result-area.visible { display: block; }
+  .result-score-row { display: flex; align-items: baseline; gap: 10px; margin-bottom: 8px; }
+  .result-score { font-family: 'Noto Serif KR', serif; font-size: 48px; font-weight: 700; }
+  .result-score.green { color: var(--green); }
+  .result-score.amber { color: var(--amber); }
+  .result-score.red { color: var(--red); }
+  .result-score-label { font-size: 13px; color: var(--muted); }
+  .result-percent { font-size: 13px; margin-bottom: 16px; }
+  .result-bar-wrap { background: rgba(255,255,255,0.05); border-radius: 4px; height: 6px; margin-bottom: 20px; }
+  .result-bar { height: 6px; border-radius: 4px; transition: width 0.8s ease; }
+  .result-bar.green { background: var(--green); }
+  .result-bar.amber { background: var(--amber); }
+  .result-bar.red { background: var(--red); }
+  .result-message { font-size: 14px; color: var(--muted); line-height: 1.9; }
+  .result-message strong { color: var(--text); font-weight: 500; }
+  .result-body-voice {
+    margin-top: 16px; padding: 16px;
+    background: rgba(200,169,110,0.07);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 8px 8px 0;
+    font-size: 13px; color: var(--accent2); font-style: italic; line-height: 1.8;
+  }
+  .check-btn {
+    width: 100%; margin-top: 20px;
+    background: var(--accent); color: #0d0d0d;
+    border: none; padding: 16px; border-radius: 6px;
+    font-size: 14px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: background 0.2s;
+  }
+  .check-btn:hover { background: var(--accent2); }
+
+  /* TYPES */
+  .type-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
+  @media(max-width:500px){ .type-grid { grid-template-columns: 1fr; } }
+  .type-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .type-card:hover { border-color: var(--border2); transform: translateY(-2px); }
+  .type-icon { font-size: 22px; margin-bottom: 10px; }
+  .type-name { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .type-tag { display: inline-block; font-size: 10px; padding: 3px 9px; border-radius: 20px; margin-bottom: 8px; font-weight: 500; }
+  .tag-coral { background: rgba(224,92,92,0.15); color: #e8a0a0; }
+  .tag-blue { background: rgba(92,138,224,0.15); color: #a0b8e8; }
+  .tag-amber { background: rgba(232,168,53,0.15); color: #e8c87a; }
+  .tag-purple { background: rgba(150,120,220,0.15); color: #c0a8e8; }
+  .type-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+  .type-message { font-size: 12px; color: var(--accent); margin-top: 10px; font-style: italic; }
+
+  /* ENERGY GRAPH */
+  .graph-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 24px; margin-top: 28px;
+  }
+  .graph-label { font-size: 12px; color: var(--muted); margin-bottom: 16px; }
+  .graph-bars { display: flex; align-items: flex-end; gap: 6px; height: 90px; }
+  .g-bar-wrap { flex: 1; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 6px; }
+  .g-bar { width: 100%; border-radius: 3px 3px 0 0; flex-shrink: 0; }
+  .g-time { font-size: 10px; color: var(--muted); flex-shrink: 0; }
+  .graph-note { font-size: 11px; color: var(--muted); margin-top: 12px; text-align: center; font-style: italic; }
+
+  /* PRESCRIPTION */
+  .rx-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px,1fr)); gap: 12px; margin-top: 28px; }
+  .rx-card {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 10px; padding: 20px;
+    transition: border-color 0.2s;
+  }
+  .rx-card.star { border-color: var(--accent-border); }
+  .rx-card:hover { border-color: var(--border2); }
+  .rx-icon { font-size: 22px; margin-bottom: 12px; }
+  .rx-name { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 6px; }
+  .rx-copy { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .rx-special { font-size: 12px; color: var(--accent2); background: var(--accent-bg); border-radius: 6px; padding: 8px 10px; line-height: 1.5; }
+  .rx-badge { display: inline-block; font-size: 9px; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); border: 1px solid var(--accent-border); padding: 2px 7px; border-radius: 20px; margin-bottom: 8px; }
+
+  /* LIMIT */
+  .limit-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 28px; margin-top: 28px;
+  }
+  .limit-text { font-size: 15px; line-height: 2; color: var(--text); }
+  .limit-text strong { color: var(--accent2); font-weight: 500; }
+  .pattern-box {
+    margin-top: 20px; background: var(--red-bg);
+    border: 1px solid rgba(224,92,92,0.15);
+    border-radius: 8px; padding: 16px 20px;
+  }
+  .pattern-title { font-size: 11px; letter-spacing: 0.15em; color: var(--red); margin-bottom: 10px; }
+  .pattern-flow { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .pattern-step {
+    font-size: 12px; color: #e0a0a0;
+    background: rgba(224,92,92,0.1); border-radius: 4px; padding: 5px 12px;
+  }
+  .pattern-arr { font-size: 12px; color: var(--red); }
+
+  /* COMPARE */
+  .compare-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 28px; }
+  @media(max-width:480px){ .compare-grid { grid-template-columns: 1fr; } }
+  .compare-card { border-radius: 10px; padding: 22px; }
+  .compare-bad { background: var(--red-bg); border: 1px solid rgba(224,92,92,0.2); }
+  .compare-good { background: var(--green-bg); border: 1px solid rgba(92,190,138,0.2); }
+  .compare-head { font-size: 13px; font-weight: 500; margin-bottom: 14px; }
+  .compare-bad .compare-head { color: var(--red); }
+  .compare-good .compare-head { color: var(--green); }
+  .compare-row-item { display: flex; align-items: flex-start; gap: 8px; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,0.04); font-size: 12px; line-height: 1.5; }
+  .compare-row-item:last-child { border-bottom: none; }
+  .compare-bad .compare-row-item { color: #e0a0a0; }
+  .compare-good .compare-row-item { color: #90d8b0; }
+
+  /* PROGRAM */
+  .program-box {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 12px; padding: 32px; margin-top: 28px; text-align: center;
+  }
+  .program-quote {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 16px; line-height: 2; color: var(--text); margin-bottom: 24px;
+  }
+  .program-quote strong { color: var(--accent2); }
+  .program-steps { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-top: 20px; }
+  @media(max-width:480px){ .program-steps { grid-template-columns: 1fr; } }
+  .program-step { text-align: center; }
+  .p-step-num { font-size: 11px; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 8px; }
+  .p-step-text { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .gift-badge {
+    margin-top: 24px; display: inline-block;
+    background: var(--accent-bg); border: 1px solid var(--accent-border);
+    color: var(--accent2); font-size: 12px; padding: 10px 20px;
+    border-radius: 6px;
+  }
+
+  /* CTA FORM */
+  .cta-section { background: var(--bg2); }
+  .form-wrap {
+    background: var(--card); border: 1px solid var(--border);
+    border-radius: 16px; padding: 36px; margin-top: 28px;
+  }
+  .form-title {
+    font-family: 'Noto Serif KR', serif;
+    font-size: 20px; font-weight: 700; margin-bottom: 8px;
+  }
+  .form-sub { font-size: 13px; color: var(--muted); margin-bottom: 28px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media(max-width:500px){ .form-grid { grid-template-columns: 1fr; } }
+  .form-group { display: flex; flex-direction: column; gap: 6px; }
+  .form-group.full { grid-column: 1 / -1; }
+  .form-group label { font-size: 11px; letter-spacing: 0.1em; color: var(--muted); }
+  .form-group input, .form-group select, .form-group textarea {
+    background: var(--bg3); border: 1px solid var(--border2);
+    color: var(--text); border-radius: 6px; padding: 12px 14px;
+    font-size: 13px; font-family: 'Noto Sans KR', sans-serif;
+    outline: none; transition: border-color 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus {
+    border-color: var(--accent);
+  }
+  .form-group textarea { resize: none; }
+  .form-submit {
+    width: 100%; margin-top: 20px;
+    background: var(--accent); color: #0d0d0d;
+    border: none; padding: 16px; border-radius: 6px;
+    font-size: 15px; font-weight: 700; cursor: pointer;
+    font-family: 'Noto Sans KR', sans-serif;
+    transition: background 0.2s, transform 0.15s;
+    letter-spacing: 0.03em;
+  }
+  .form-submit:hover { background: var(--accent2); transform: translateY(-1px); }
+  .form-note { text-align: center; font-size: 11px; color: var(--muted); margin-top: 14px; line-height: 1.8; }
+  .trial-card {
+    margin-top: 16px; background: var(--green-bg);
+    border: 1px solid rgba(92,190,138,0.2); border-radius: 10px;
+    padding: 20px 24px; display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .trial-text { font-size: 13px; color: #90d8b0; line-height: 1.6; }
+  .trial-btn {
+    background: rgba(92,190,138,0.15); color: var(--green);
+    border: 1px solid rgba(92,190,138,0.3); border-radius: 6px;
+    padding: 10px 18px; font-size: 12px; font-weight: 500;
+    cursor: pointer; white-space: nowrap; text-decoration: none;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+
+  /* TRUST */
+  .trust-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-top: 28px; }
+  @media(max-width:480px){ .trust-row { grid-template-columns: 1fr; } }
+  .trust-card { text-align: center; background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 22px 16px; }
+  .trust-num { font-family: 'Noto Serif KR', serif; font-size: 32px; font-weight: 700; color: var(--accent); }
+  .trust-label { font-size: 11px; color: var(--muted); margin-top: 6px; }
+  .case-img-wrap { margin: 4px 0; border-radius: 10px; overflow: hidden; position: relative; }
+  .case-img { width: 100%; height: 220px; object-fit: cover; display: block; filter: brightness(0.85); transition: filter 0.3s; }
+  .case-img:hover { filter: brightness(1); }
+  .case-img-caption { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(0,0,0,0.65)); padding: 18px 16px 12px; font-size: 12px; color: rgba(240,237,230,0.85); letter-spacing: 0.04em; }
+  .case-item {
+    background: var(--card); border: 1px solid var(--border);
+    border-left: 2px solid var(--accent);
+    border-radius: 0 8px 8px 0; padding: 16px 20px;
+    font-size: 13px; color: var(--muted); line-height: 1.7;
+  }
+  .case-item strong { color: var(--text); font-weight: 500; }
+  .philosophy {
+    margin-top: 24px; text-align: center;
+    font-family: 'Noto Serif KR', serif;
+    font-size: 15px; color: var(--text); line-height: 2;
+    padding: 28px; background: var(--accent-bg);
+    border: 1px solid var(--accent-border); border-radius: 12px;
+  }
+  .philosophy strong { color: var(--accent2); }
+
+  /* FOOTER */
+  footer {
+    border-top: 1px solid var(--border);
+    text-align: center; padding: 40px 24px;
+    font-size: 12px; color: var(--muted);
+  }
+
+  /* SCROLL FADE */
+  .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease, transform 0.6s ease; }
+  .fade-in.visible { opacity: 1; transform: none; }
+
+  /* SUCCESS */
+  .success-msg {
+    display: none; text-align: center; padding: 28px;
+    background: var(--green-bg); border: 1px solid rgba(92,190,138,0.2);
+    border-radius: 10px; margin-top: 16px;
+    font-size: 14px; color: #90d8b0; line-height: 1.8;
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="logo">STC바디리셋</div>
+    <a href="#cta" class="nav-cta">상담 신청하기</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-eyebrow">Body Reset Program</div>
+    <h1>열심히 했는데,<br>왜 내 몸은 <em>반응하지 않을까요?</em></h1>
+    <p class="hero-sub">
+      식단도 바꿨고, 운동도 했습니다.<br>
+      그런데 몸은 그대로입니다.<br>
+      문제는 의지가 아니라 <strong>몸의 리셋 여부</strong>입니다.
+    </p>
+    <a href="#checklist" class="btn-primary">내 몸 상태 지금 확인하기 →</a>
+  </div>
+</section>
+
+<!-- 공감 -->
+<section id="empathy">
+  <div class="container fade-in">
+    <div class="sec-label">공감</div>
+    <h2 class="sec-title">혹시 이런 하루를<br>보내고 계신가요?</h2>
+    <div class="empathy-list">
+      <div class="empathy-item"><div class="empathy-dot"></div><span class="empathy-text">아침에 일어나도 개운하지 않고 피곤하다</span></div>
+      <div class="empathy-item"><div class="empathy-dot"></div><span class="empathy-text">점심을 먹고 나면 졸리고 집중이 안 된다</span></div>
+      <div class="empathy-item"><div class="empathy-dot"></div><span class="empathy-text">저녁이 되면 단 것, 자극적인 음식이 당긴다</span></div>
+      <div class="empathy-item"><div class="empathy-dot"></div><span class="empathy-text">붓기가 잘 빠지지 않고 몸이 무겁다</span></div>
+      <div class="empathy-item"><div class="empathy-dot"></div><span class="empathy-text">먹는 양을 줄였는데도 체중이 줄지 않는다</span></div>
+    </div>
+    <div class="empathy-quote">
+      이건 의지력 문제가 아닙니다.<br>
+      몸의 리듬이 깨진 신호입니다.
+    </div>
+  </div>
+</section>
+
+<!-- 미래 -->
+<section id="future" style="background: var(--bg2);">
+  <div class="container fade-in">
+    <div class="sec-label">방치 시 미래</div>
+    <h2 class="sec-title">지금 이대로라면<br>3개월 뒤 어떻게 될까요?</h2>
+    <div class="future-box">
+      <div class="future-title">⚠ 지금 상태로 3개월이 지나면</div>
+      <div class="future-item"><span class="future-arrow">→</span>피로가 만성화되어 회복이 점점 더 어려워집니다</div>
+      <div class="future-item"><span class="future-arrow">→</span>체중 감량 시도를 반복하다 결국 포기하게 됩니다</div>
+      <div class="future-item"><span class="future-arrow">→</span>대사 저하로 같은 노력에도 효과가 줄어듭니다</div>
+      <div class="future-item"><span class="future-arrow">→</span>작은 스트레스에도 몸이 더 예민하게 반응합니다</div>
+    </div>
+    <div class="future-callout">
+      문제는 지금 당장 아프지 않다는 것입니다.<br>
+      몸은 조용히 쌓이다가, 한번에 반응합니다.
+    </div>
+  </div>
+</section>
+
+<!-- 자가진단 -->
+<section id="checklist">
+  <div class="container fade-in">
+    <div class="sec-label">자가진단</div>
+    <h2 class="sec-title">지금 내 몸은<br>몇 점일까요?</h2>
+    <p class="sec-desc">아래 항목 중 해당되는 것을 모두 체크해보세요 (30초)</p>
+    <div class="checklist-grid" id="checkGrid">
+      <div class="check-item" data-score="10" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">아침에 일어나도 개운하지 않다</span></div>
+      <div class="check-item" data-score="9" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">잠을 자도 피로가 풀리지 않는다</span></div>
+      <div class="check-item" data-score="8" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">오후에 단 음식이 당긴다</span></div>
+      <div class="check-item" data-score="8" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">붓기가 자주 있다</span></div>
+      <div class="check-item" data-score="10" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">식사량이 적은데 살이 잘 안 빠진다</span></div>
+      <div class="check-item" data-score="7" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">스트레스를 받으면 폭식하게 된다</span></div>
+      <div class="check-item" data-score="8" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">장이 불편하고 복부 팽만감이 있다</span></div>
+      <div class="check-item" data-score="6" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">피부가 칙칙하거나 트러블이 잦다</span></div>
+      <div class="check-item" data-score="7" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">감정 기복이 심하다</span></div>
+      <div class="check-item" data-score="8" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">이유 없이 몸이 무겁다</span></div>
+      <div class="check-item" data-score="6" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">물을 잘 안 마신다</span></div>
+      <div class="check-item" data-score="7" onclick="toggleCheck(this)"><div class="check-box"><span class="check-mark">✓</span></div><span class="check-text">규칙적인 식사가 어렵다</span></div>
+    </div>
+    <button class="check-btn" onclick="showResult()">내 상태 확인하기</button>
+
+    <div class="result-area" id="resultArea">
+      <div class="result-score-row">
+        <div class="result-score" id="resultScore">0</div>
+        <div class="result-score-label">점 / 100점</div>
+      </div>
+      <div class="result-percent" id="resultPercent"></div>
+      <div class="result-bar-wrap"><div class="result-bar" id="resultBar" style="width:0%"></div></div>
+      <div class="result-message" id="resultMessage"></div>
+      <div class="result-body-voice" id="resultVoice"></div>
+    </div>
+  </div>
+</section>
+
+<!-- 유형 분석 -->
+<section id="types" style="background: var(--bg2);">
+  <div class="container fade-in">
+    <div class="sec-label">유형 분석</div>
+    <h2 class="sec-title">당신의 몸 유형은<br>어떤 패턴인가요?</h2>
+    <div class="type-grid">
+      <div class="type-card">
+        <div class="type-icon">🔥</div>
+        <span class="type-tag tag-coral">스트레스 축적형</span>
+        <div class="type-name">코르티솔 과잉 상태</div>
+        <div class="type-desc">감정 기복, 복부 집중, 폭식 패턴이 반복되는 유형</div>
+        <div class="type-message">"이완이 먼저입니다"</div>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">💧</div>
+        <span class="type-tag tag-blue">순환 저하형</span>
+        <div class="type-name">배출 리듬 저하 상태</div>
+        <div class="type-desc">붓기, 무거움, 피부 트러블이 반복되는 유형</div>
+        <div class="type-message">"순환과 흐름 회복이 핵심"</div>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">🌙</div>
+        <span class="type-tag tag-amber">대사 저하형</span>
+        <div class="type-name">대사 엔진 저하 상태</div>
+        <div class="type-desc">살이 안 빠지고 식욕 불균형이 지속되는 유형</div>
+        <div class="type-message">"대사 엔진을 다시 켜는 루틴"</div>
+      </div>
+      <div class="type-card">
+        <div class="type-icon">⚡</div>
+        <span class="type-tag tag-purple">에너지 고갈형</span>
+        <div class="type-name">회복 사이클 붕괴 상태</div>
+        <div class="type-desc">수면 불량, 집중력 저하가 이어지는 유형</div>
+        <div class="type-message">"회복 사이클 재설계 필요"</div>
+      </div>
+    </div>
+
+    <!-- 에너지 그래프 -->
+    <div class="graph-wrap" style="margin-top:32px;">
+      <div class="graph-label">하루 에너지 패턴 — 현재 상태 (순환 저하형 예시)</div>
+      <div class="graph-bars" id="graphBars"></div>
+      <div class="graph-note">오전 고점 → 오후 급락 → 저녁 식욕 폭증 반복 패턴</div>
+    </div>
+  </div>
+</section>
+
+<!-- 처방 -->
+<section id="prescription">
+  <div class="container fade-in">
+    <div class="sec-label">간단 처방</div>
+    <h2 class="sec-title">지금 당장 시작할 수 있는<br>4가지</h2>
+    <div class="rx-grid">
+      <div class="rx-card">
+        <div class="rx-icon">💧</div>
+        <div class="rx-name">아침 루틴</div>
+        <div class="rx-copy">기상 후<br>미온수 300ml</div>
+      </div>
+      <div class="rx-card">
+        <div class="rx-icon">⏱</div>
+        <div class="rx-name">식사 간격</div>
+        <div class="rx-copy">4~5시간<br>간격 유지</div>
+      </div>
+      <div class="rx-card">
+        <div class="rx-icon">🚶</div>
+        <div class="rx-name">저녁 루틴</div>
+        <div class="rx-copy">하루 마무리<br>20분 걷기</div>
+      </div>
+      <div class="rx-card star">
+        <div class="rx-badge">CORE</div>
+        <div class="rx-icon">🧬</div>
+        <div class="rx-name">영양 루틴</div>
+        <div class="rx-special">몸 회복을 돕는<br>기본 영양 채우기</div>
+      </div>
+    </div>
+    <div class="empathy-quote" style="margin-top:20px;">
+      "완벽한 해결책이 아니라, 시작할 수 있는 것부터 입니다."
+    </div>
+  </div>
+</section>
+
+<!-- 한계 -->
+<section style="background: var(--bg2);">
+  <div class="container fade-in">
+    <div class="sec-label">한계 선언</div>
+    <h2 class="sec-title">그런데 혼자 하면<br>왜 잘 안 될까요?</h2>
+    <div class="limit-box">
+      <p class="limit-text">
+        이 4가지, 알고는 있었을 겁니다.<br>
+        그런데 꾸준히 하기 어려운 이유가 있습니다.<br><br>
+        <strong>몸의 루틴은 구조가 없으면 무너집니다.</strong><br>
+        의지로 버티는 방식은 대부분 3주를 넘기지 못합니다.
+      </p>
+      <div class="pattern-box">
+        <div class="pattern-title">반복 실패 패턴</div>
+        <div class="pattern-flow">
+          <span class="pattern-step">다이어트 시작</span>
+          <span class="pattern-arr">→</span>
+          <span class="pattern-step">2~3주 유지</span>
+          <span class="pattern-arr">→</span>
+          <span class="pattern-step">무너짐</span>
+          <span class="pattern-arr">→</span>
+          <span class="pattern-step">자책</span>
+          <span class="pattern-arr">→</span>
+          <span class="pattern-step">다시 시작</span>
+          <span class="pattern-arr">→</span>
+          <span class="pattern-step">반복</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 비교 -->
+<section>
+  <div class="container fade-in">
+    <div class="sec-label">혼자 vs 함께</div>
+    <h2 class="sec-title">무엇이 다를까요?</h2>
+    <div class="compare-grid">
+      <div class="compare-card compare-bad">
+        <div class="compare-head">혼자 할 때</div>
+        <div class="compare-row-item">· 정보는 있지만 실행이 안 됨</div>
+        <div class="compare-row-item">· 동기 유지가 어려움</div>
+        <div class="compare-row-item">· 피드백이 없어 방향을 모름</div>
+        <div class="compare-row-item">· 결과 없이 포기하게 됨</div>
+      </div>
+      <div class="compare-card compare-good">
+        <div class="compare-head">STC와 함께할 때</div>
+        <div class="compare-row-item">· 몸이 반응하는 <strong style="color:#5cbe8a;">맞춤 영양 레시피</strong> 제공</div>
+        <div class="compare-row-item">· 지속 가능한 <strong style="color:#5cbe8a;">건강 식습관 가이드라인</strong></div>
+        <div class="compare-row-item">· 내 상태에 맞는 <strong style="color:#5cbe8a;">1:1 전담 피드백</strong></div>
+        <div class="compare-row-item">· 전문가가 직접 진행하는 <strong style="color:#5cbe8a;">STC 프리미엄 라이브</strong></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 프로그램 -->
+<section style="background: var(--bg2);">
+  <div class="container fade-in">
+    <div class="sec-label">프로그램 소개</div>
+    <h2 class="sec-title">생활을 함께 설계하는<br>STC바디리셋</h2>
+    <div class="program-box">
+      <div class="program-quote">
+        저는 제품을 파는 사람이 아닙니다.<br>
+        당신의 몸이 다시 리듬을 찾을 수 있도록<br>
+        <strong>생활 루틴 전체를 함께 설계합니다.</strong>
+      </div>
+      <div class="divider"></div>
+      <div class="program-steps">
+        <div class="program-step">
+          <div class="p-step-num">STEP 01</div>
+          <div class="p-step-text">몸이 반응하는<br>맞춤 영양 레시피</div>
+        </div>
+        <div class="program-step">
+          <div class="p-step-num">STEP 02</div>
+          <div class="p-step-text">지속 가능한<br>건강 식습관 가이드</div>
+        </div>
+        <div class="program-step">
+          <div class="p-step-num">STEP 03</div>
+          <div class="p-step-text">전문가 직강<br>STC 프리미엄 라이브</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" class="cta-section">
+  <div class="container fade-in">
+    <div class="sec-label">상담 신청</div>
+    <h2 class="sec-title">내 상태, 한번 정확히<br>확인해보고 싶다면</h2>
+    <div class="form-wrap">
+      <div class="form-title">편하게 문의해보세요</div>
+      <div class="form-sub">천천히, 내 몸과 생활을 이해하는 것부터 시작해보셔도 괜찮습니다.</div>
+      <form id="contactForm" action="https://formspree.io/f/mbdqzvbb" method="POST">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>이름</label>
+            <input type="text" name="name" placeholder="홍길동" required>
+          </div>
+          <div class="form-group">
+            <label>연락처</label>
+            <input type="tel" name="phone" placeholder="010-0000-0000" required>
+          </div>
+          <div class="form-group full">
+            <label>현재 가장 신경 쓰이는 부분</label>
+            <select name="concern">
+              <option value="">선택해주세요</option>
+              <option>체중 감량이 잘 안 됩니다</option>
+              <option>만성 피로가 심합니다</option>
+              <option>붓기가 잘 빠지지 않습니다</option>
+              <option>식욕 조절이 어렵습니다</option>
+              <option>수면의 질이 낮습니다</option>
+              <option>전반적인 루틴 설계가 필요합니다</option>
+            </select>
+          </div>
+          <div class="form-group full">
+            <label>상담 가능 시간</label>
+            <input type="text" name="available_time" placeholder="예: 평일 오후 2~5시, 주말 오전">
+          </div>
+          <div class="form-group full">
+            <label>추가로 전하고 싶은 내용 (선택)</label>
+            <textarea name="message" rows="3" placeholder="현재 상황이나 궁금한 점을 자유롭게 적어주세요"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="form-submit">상담 신청하기</button>
+        <div class="form-note">
+          천천히 시작해도 괜찮습니다 &nbsp;|&nbsp; 내 속도대로, 함께 이해해 드립니다<br>
+          접수 후 24시간 내 연락드립니다
+        </div>
+      </form>
+      <div class="success-msg" id="successMsg">
+        신청해 주셔서 감사합니다.<br>
+        24시간 내로 연락드리겠습니다. 🙏
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- 신뢰 -->
+<section>
+  <div class="container fade-in">
+    <div class="sec-label">신뢰 요소</div>
+    <h2 class="sec-title">함께한 분들의<br>이야기</h2>
+    <div class="trust-row">
+      <div class="trust-card">
+        <div class="trust-num">200+</div>
+        <div class="trust-label">함께한 분들</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-num">4.9</div>
+        <div class="trust-label">만족도 (5점 만점)</div>
+      </div>
+      <div class="trust-card">
+        <div class="trust-num">87%</div>
+        <div class="trust-label">루틴 유지율</div>
+      </div>
+    </div>
+    <div class="case-list">
+      <div class="case-item"><strong>"운동해도 살이 안 빠진다"</strong>고 하셨던 분 → 루틴 재설계 후 3주 만에 붓기 감소 경험</div>
+
+      <div class="case-img-wrap">
+        <img
+          src="https://images.unsplash.com/photo-1541199249251-f713e6145474?w=800&q=80"
+          alt="아침에 개운하게 일어나는 모습"
+          class="case-img"
+        >
+        <div class="case-img-caption">아침에 개운하게 일어나는 변화</div>
+      </div>
+
+      <div class="case-item"><strong>"매일 피곤하다"</strong>고 하셨던 분 → 수면과 식사 간격 조정 후 오후 에너지가 달라짐</div>
+
+      <div class="case-img-wrap">
+        <img
+          src="https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800&q=80"
+          alt="날씬한 여자가 조깅하는 모습"
+          class="case-img"
+        >
+        <div class="case-img-caption">몸이 가벼워지며 달라진 일상</div>
+      </div>
+
+      <div class="case-item"><strong>"의지가 없는 것 같다"</strong>고 하셨던 분 → 구조를 만들고 나서 4주 연속 루틴 유지</div>
+    </div>
+    <div class="philosophy">
+      저는 몸의 구조를 함께 이해하고,<br>
+      생활에 맞는 루틴을 설계합니다.<br>
+      빠른 결과보다 <strong>지속 가능한 변화</strong>를 만듭니다.
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div>© 2025 STC바디리셋. All rights reserved.</div>
+  <div style="margin-top:8px;">상담 문의 | 강요 없이 방향을 함께 확인합니다</div>
+</footer>
+
+<script>
+  function toggleCheck(el) {
+    el.classList.toggle('checked');
+  }
+
+  function showResult() {
+    const items = document.querySelectorAll('.check-item.checked');
+    let total = 0;
+    items.forEach(i => total += parseInt(i.dataset.score));
+    const maxScore = 90;
+    const pct = Math.round((total / maxScore) * 100);
+
+    const area = document.getElementById('resultArea');
+    const scoreEl = document.getElementById('resultScore');
+    const barEl = document.getElementById('resultBar');
+    const pctEl = document.getElementById('resultPercent');
+    const msgEl = document.getElementById('resultMessage');
+    const voiceEl = document.getElementById('resultVoice');
+
+    area.classList.add('visible');
+    scoreEl.textContent = total;
+
+    let level, msg, voice, barColor;
+    if (total <= 30) {
+      level = 'green'; barColor = 'green';
+      pctEl.innerHTML = '현재 비교적 안정적인 상태입니다.';
+      msg = '현재는 비교적 균형 잡힌 상태입니다. 지금의 루틴을 유지하는 것이 중요합니다.';
+      voice = '몸이 말하고 있습니다. "지금 이 상태, 계속 유지해줘."';
+    } else if (total <= 60) {
+      level = 'amber'; barColor = 'amber';
+      pctEl.innerHTML = '비슷한 상태의 분들 중 <strong>상위 65%</strong>에 해당합니다. 지금이 관리 시작 적기입니다.';
+      msg = '몸의 리듬이 흔들리고 있습니다. 지금 시작하면 충분히 되돌릴 수 있습니다.';
+      voice = '몸이 말하고 있습니다. "나 조금 힘들어. 이제 신경 써줘."';
+    } else {
+      level = 'red'; barColor = 'red';
+      pctEl.innerHTML = '비슷한 상태의 분들 중 <strong>상위 82%</strong>에 해당합니다. 루틴 재설계가 필요한 상태입니다.';
+      msg = '몸이 회복 신호를 보내고 있습니다. 지금 구조적인 변화가 필요합니다.';
+      voice = '몸이 말하고 있습니다. "나 지쳤어. 리셋이 필요해."';
+    }
+
+    scoreEl.className = 'result-score ' + level;
+    barEl.className = 'result-bar ' + barColor;
+    setTimeout(() => { barEl.style.width = Math.min(pct, 100) + '%'; }, 100);
+    msgEl.innerHTML = msg;
+    voiceEl.textContent = voiceEl.textContent;
+    voiceEl.innerHTML = '<em>' + voice + '</em>';
+
+    area.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+
+  // 에너지 그래프
+  const bars = [
+    { time: '기상', h: 50, c: '#378ADD' },
+    { time: '오전', h: 72, c: '#378ADD' },
+    { time: '점심', h: 54, c: '#EF9F27' },
+    { time: '오후', h: 25, c: '#EF9F27' },
+    { time: '저녁', h: 45, c: '#E24B4A' },
+    { time: '밤',   h: 68, c: '#E24B4A' },
+  ];
+  const gb = document.getElementById('graphBars');
+  const maxH = 90;
+  gb.innerHTML = '';
+  bars.forEach(b => {
+    const px = Math.round((b.h / 100) * maxH);
+    const wrap = document.createElement('div');
+    wrap.className = 'g-bar-wrap';
+    wrap.innerHTML = `<div class="g-bar" style="height:${px}px; background:${b.c}; opacity:0.8; transition: height 0.8s ease;"></div><div class="g-time">${b.time}</div>`;
+    gb.appendChild(wrap);
+  });
+
+  // 폼 제출
+  const form = document.getElementById('contactForm');
+  form.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const btn = form.querySelector('.form-submit');
+    btn.textContent = '전송 중...';
+    btn.disabled = true;
+    try {
+      const res = await fetch(form.action, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      });
+      if (res.ok) {
+        form.style.display = 'none';
+        document.getElementById('successMsg').style.display = 'block';
+      } else {
+        btn.textContent = '다시 시도해주세요';
+        btn.disabled = false;
+      }
+    } catch {
+      btn.textContent = '다시 시도해주세요';
+      btn.disabled = false;
+    }
+  });
+
+  // 스크롤 fade
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+</script>
+</body>
+</html>
